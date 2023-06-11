@@ -1,6 +1,5 @@
-// Copyright (c) 2020 Tailscale Inc & AUTHORS All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
+// Copyright (c) Tailscale Inc & AUTHORS
+// SPDX-License-Identifier: BSD-3-Clause
 
 package main
 
@@ -50,8 +49,7 @@ func startMeshWithHost(s *derp.Server, host string) error {
 		}
 		var d net.Dialer
 		var r net.Resolver
-		if port == "443" && strings.HasSuffix(host, ".tailscale.com") {
-			base := strings.TrimSuffix(host, ".tailscale.com")
+		if base, ok := strings.CutSuffix(host, ".tailscale.com"); ok && port == "443" {
 			subCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
 			defer cancel()
 			vpcHost := base + "-vpc.tailscale.com"
@@ -69,8 +67,8 @@ func startMeshWithHost(s *derp.Server, host string) error {
 		return d.DialContext(ctx, network, addr)
 	})
 
-	add := func(k key.Public) { s.AddPacketForwarder(k, c) }
-	remove := func(k key.Public) { s.RemovePacketForwarder(k, c) }
+	add := func(k key.NodePublic) { s.AddPacketForwarder(k, c) }
+	remove := func(k key.NodePublic) { s.RemovePacketForwarder(k, c) }
 	go c.RunWatchConnectionLoop(context.Background(), s.PublicKey(), logf, add, remove)
 	return nil
 }
